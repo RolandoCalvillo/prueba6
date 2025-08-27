@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluación de Asesores UV</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #2a6aff, #ff8500);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #1a202c;
+        }
+
+        .container {
+            background-color: white;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            max-width: 90%;
+            width: 100%;
+            padding: 2rem;
+            transition: all 0.5s ease-in-out;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .tab-button.active {
+            background-color: #2a6aff;
+            color: white;
+        }
+
+        .tab-button:not(.active) {
+            background-color: #f7fafc;
+        }
+
+        .card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 20px -5px rgba(0, 0, 0, 0.2), 0 6px 10px -2px rgba(0, 0, 0, 0.1);
+        }
+
+        .toggle-arrow {
+            transition: transform 0.3s ease;
+        }
+
+        .toggle-arrow.rotated {
+            transform: rotate(180deg);
+        }
+
+        .bg-color-1 { background-color: #ffe6a8; }
+        .bg-color-2 { background-color: #a8d7ff; }
+        .bg-color-3 { background-color: #a8ffe6; }
+        .bg-color-4 { background-color: #ffb8a8; }
+        .bg-color-5 { background-color: #d8a8ff; }
+        .bg-color-6 { background-color: #a8ffb8; }
+        .bg-color-7 { background-color: #ffcca8; }
+        .bg-color-8 { background-color: #a8ccff; }
+
+        .score-circle {
+            width: 3.5rem;
+            height: 3.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 9999px;
+            font-weight: 700;
+            border: 4px solid;
+        }
+
+        .score-green {
+            border-color: #48bb78;
+        }
+
+        .score-red {
+            border-color: #e53e3e;
+        }
+
+        /* Tabla de Edición de Usuarios */
+        .table-container {
+            overflow-x: auto;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .admin-table th, .admin-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+            white-space: nowrap; /* Evita que el texto se rompa */
+        }
+        
+        .admin-table th {
+            background-color: #f7fafc;
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: #4a5568;
+            position: sticky;
+            top: 0;
+        }
+
+        .admin-table tr:hover {
+            background-color: #edf2f7;
+        }
+
+        .admin-table input[type="text"],
+        .admin-table textarea {
+            width: 100%;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            border: 1px solid #cbd5e0;
+        }
+        
+        /* Estilos del Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .close-button {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <!-- Pantalla de Login -->
+    <div id="login-screen" class="container text-center fade-in">
+        <img src="https://i.ibb.co/m5QcyKWg/Logo-CNCI.png" alt="Logo CNCI" class="mx-auto mb-6 w-32 md:w-48">
+        <h1 id="login-title" class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">Evaluación Modular – Departamento de Servicios Estudiantiles 📊</h1>
+        <p id="login-subtitle" class="text-xl text-gray-600 mb-6">Módulo M8, Agosto 2025 🗓️</p>
+        <p id="login-description" class="text-gray-500 mb-6">Consulta tu desempeño del módulo de manera detallada ingresando tu usuario Vici.</p>
+
+        <div class="max-w-md mx-auto">
+            <input type="text" id="user-input" placeholder="Escribe tu usuario aquí" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4 text-center">
+            <button id="login-button" class="w-full bg-blue-500 text-white font-semibold py-3 rounded-lg hover:bg-blue-600 transition-colors">
+                Consultar mi Evaluación ✨
+            </button>
+        </div>
+        <div id="error-message" class="mt-4 text-red-500 text-sm hidden">Usuario o código Vici no válido.</div>
+    </div>
+
+    <!-- Panel de Administrador -->
+    <div id="admin-screen" class="container hidden fade-in">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-6">
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Panel de Administrador 🔑</h1>
+            <div class="flex space-x-2 mt-4 md:mt-0">
+                <button id="admin-logout-button" class="bg-gray-200 text-gray-600 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors">
+                    Volver al Login 🚪
+                </button>
+                <button id="empty-table-button" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors">
+                    Vaciar Tabla 🗑️
+                </button>
+            </div>
+        </div>
+
+        <!-- Sección de Edición General -->
+        <div class="bg-gray-100 p-6 rounded-xl shadow-sm mb-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Edición General 📝</h2>
+            <div class="space-y-4">
+                <div>
+                    <label for="admin-title" class="block text-sm font-medium text-gray-700">Título de Login:</label>
+                    <input type="text" id="admin-title" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label for="admin-subtitle" class="block text-sm font-medium text-gray-700">Subtítulo de Login:</label>
+                    <input type="text" id="admin-subtitle" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label for="admin-description" class="block text-sm font-medium text-gray-700">Descripción de Login:</label>
+                    <textarea id="admin-description" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
+                </div>
+            </div>
+            <button id="save-general-changes" class="mt-4 bg-blue-500 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-600 transition-colors">
+                Guardar Cambios
+            </button>
+        </div>
+
+        <!-- Tabla de Edición de Usuarios -->
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold text-gray-800">Tabla de Edición de Usuarios 🧑‍💻</h2>
+            <button id="add-user-button" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors">
+                Añadir Usuario ➕
+            </button>
+        </div>
+        
+        <div class="table-container">
+            <table id="users-table" class="admin-table">
+                <thead>
+                    <tr>
+                        <th>
+                            <div class="flex items-center">
+                                Usuario
+                                <input type="text" id="filter-user" placeholder="Filtrar" class="w-24 ml-2 px-2 py-1 text-sm border rounded">
+                            </div>
+                        </th>
+                        <th>
+                            <div class="flex items-center">
+                                Nombre
+                                <input type="text" id="filter-name" placeholder="Filtrar" class="w-24 ml-2 px-2 py-1 text-sm border rounded">
+                            </div>
+                        </th>
+                        <th>Puntaje General</th>
+                        <th>Meta de Llamadas</th>
+                        <th>Comentarios</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="users-table-body">
+                    <!-- Filas generadas dinámicamente -->
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <!-- Pantalla de Dashboard -->
+    <div id="dashboard-screen" class="container hidden fade-in">
+        <div class="flex justify-between items-center mb-6">
+            <div class="flex flex-col">
+                <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Resultados de Evaluación 📈</h1>
+                <p id="user-name" class="text-xl text-gray-600 mt-2"></p>
+            </div>
+            <button id="dashboard-logout-button" class="bg-gray-200 text-gray-600 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors">
+                Volver 🚪
+            </button>
+        </div>
+
+        <!-- Pestañas de Navegación -->
+        <div class="flex space-x-2 md:space-x-4 border-b border-gray-200 mb-6">
+            <button class="tab-button flex-1 text-center py-2 px-4 rounded-t-lg transition-colors duration-300" data-tab="general">
+                Resumen General 📄
+            </button>
+            <button class="tab-button flex-1 text-center py-2 px-4 rounded-t-lg transition-colors duration-300" data-tab="tendencias">
+                Tendencias 📊
+            </button>
+            <button class="tab-button flex-1 text-center py-2 px-4 rounded-t-lg transition-colors duration-300" data-tab="insignias">
+                Insignias 🎖️
+            </button>
+            <button class="tab-button flex-1 text-center py-2 px-4 rounded-t-lg transition-colors duration-300" data-tab="plan">
+                Plan de Mejora 🎯
+            </button>
+        </div>
+
+        <!-- Contenido de las Pestañas -->
+        <div id="tab-content" class="min-h-[500px]">
+            <!-- Resumen General -->
+            <div id="general-tab" class="tab-pane hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="bg-gray-100 p-6 rounded-xl shadow-sm">
+                        <h3 class="text-lg font-semibold mb-2">Calificación General 🌟</h3>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                            <div id="general-score-bar" class="h-2.5 rounded-full" style="background-color: #2a6aff;"></div>
+                        </div>
+                        <span id="general-score-text" class="text-sm font-semibold mt-2 block text-right"></span>
+                    </div>
+                    <div class="bg-gray-100 p-6 rounded-xl shadow-sm">
+                        <h3 class="text-lg font-semibold mb-2">Meta de Llamadas 📞</h3>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                            <div id="calls-goal-bar" class="h-2.5 rounded-full" style="background-color: #ff8500;"></div>
+                        </div>
+                        <span id="calls-goal-text" class="text-sm font-semibold mt-2 block text-right"></span>
+                    </div>
+                </div>
+
+                <div id="evaluation-cards-container" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Las tarjetas se generan dinámicamente con JS -->
+                </div>
+
+                <div class="mt-8 p-6 bg-gray-100 rounded-xl shadow-sm">
+                    <h3 class="text-lg font-semibold mb-2">Comentarios generales del Supervisor 📝</h3>
+                    <p id="supervisor-comments" class="text-gray-600"></p>
+                </div>
+
+                <div class="mt-6 text-center">
+                    <button id="details-button" class="bg-blue-500 text-white font-semibold py-3 px-8 rounded-lg hover:bg-blue-600 transition-colors">
+                        Detalles de Evaluación 🔍
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tendencias -->
+            <div id="tendencias-tab" class="tab-pane hidden">
+                <div class="bg-gray-100 p-6 rounded-xl shadow-sm mb-6">
+                    <h3 class="text-lg font-semibold mb-4 text-center">Gráfica Anual de Desempeño 📅</h3>
+                    <div class="flex justify-center space-x-4 mb-4">
+                        <button id="select-all-button" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors">Seleccionar Todo</button>
+                        <button id="deselect-all-button" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors">Desactivar Todo</button>
+                    </div>
+                    <div class="max-w-4xl mx-auto h-96 relative">
+                        <canvas id="tendenciasChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div class="bg-gray-100 p-4 rounded-xl shadow-sm text-center">
+                        <p class="text-sm text-gray-500 mb-1">Hace 2 Meses</p>
+                        <h4 class="text-2xl font-bold">90 📈</h4>
+                    </div>
+                    <div class="bg-gray-100 p-4 rounded-xl shadow-sm text-center">
+                        <p class="text-sm text-gray-500 mb-1">Mes Anterior</p>
+                        <h4 class="text-2xl font-bold">91 📈</h4>
+                    </div>
+                    <div class="bg-gray-100 p-4 rounded-xl shadow-sm text-center">
+                        <p class="text-sm text-gray-500 mb-1">Mes Actual</p>
+                        <h4 class="text-2xl font-bold">92 📈</h4>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-green-100 p-4 rounded-xl shadow-sm">
+                        <h3 class="text-lg font-semibold mb-2 flex items-center">La Mayor Mejora ✅</h3>
+                        <p class="text-gray-700">Incremento del 5% en la tasa de reincorporación, superando la meta del equipo.</p>
+                    </div>
+                    <div class="bg-red-100 p-4 rounded-xl shadow-sm">
+                        <h3 class="text-lg font-semibold mb-2 flex items-center">Área Crítica ⚠️</h3>
+                        <p class="text-gray-700">Mantener la agilidad en respuestas de WhatsApp durante picos de alta demanda.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Insignias -->
+            <div id="insignias-tab" class="tab-pane hidden">
+                <div class="bg-gray-100 p-6 rounded-xl shadow-sm mb-6">
+                    <h3 class="text-lg font-semibold mb-4 flex items-center">Tus Insignias 🏆</h3>
+                    <ul id="badges-list" class="space-y-4">
+                        <!-- Las insignias se generan dinámicamente -->
+                    </ul>
+                </div>
+
+                <div class="bg-gray-100 p-6 rounded-xl shadow-sm">
+                    <h3 class="text-lg font-semibold mb-4 flex items-center">Próximas Insignias 🚀</h3>
+                    <ul id="next-badges-list" class="space-y-4">
+                        <!-- Las próximas insignias se generan dinámicamente -->
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Plan de Mejora -->
+            <div id="plan-tab" class="tab-pane hidden">
+                <div class="bg-gray-100 p-6 rounded-xl shadow-sm mb-6">
+                    <h3 class="text-lg font-semibold mb-4">Plan de Mejora 📝</h3>
+                    <p id="improvement-plan-text" class="text-gray-600">
+                        Instrucciones para el Plan de Mejora. A partir de los resultados de tu evaluación, identifica de 3 a 4 áreas de oportunidad y describe acciones concretas que puedas implementar para mejorarlas. Indica el plazo estimado y cómo darás seguimiento a cada acción. Sé específico y realista para facilitar el cumplimiento y la evaluación de avances. Ingresa al siguiente enlace, redacta y establece tu plan de mejora antes del 11 de septiembre de 2025.
+                    </p>
+                </div>
+                <div class="text-center">
+                    <button id="improvement-plan-button" class="bg-blue-500 text-white font-semibold py-3 px-8 rounded-lg hover:bg-blue-600 transition-colors">
+                        Crear mi Plan de Mejora ✨
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal de confirmación para vaciar la tabla -->
+    <div id="empty-table-modal" class="modal hidden">
+        <div class="modal-content text-center">
+            <h2 class="text-xl font-bold mb-4">Confirmar acción</h2>
+            <p class="mb-6">¿Estás seguro de que deseas eliminar TODOS los datos de la tabla? Esta acción es irreversible.</p>
+            <div class="flex justify-center space-x-4">
+                <button id="confirm-empty-button" class="bg-red-500 text-white font-semibold py-2 px-6 rounded-lg hover:bg-red-600">Eliminar</button>
+                <button id="cancel-empty-button" class="bg-gray-300 text-gray-800 font-semibold py-2 px-6 rounded-lg hover:bg-gray-400">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para añadir un nuevo usuario -->
+    <div id="add-user-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2 class="text-xl font-bold mb-4">Añadir Nuevo Usuario</h2>
+            <span class="close-button">&times;</span>
+            <form id="add-user-form" class="space-y-4">
+                <div>
+                    <label for="new-username" class="block text-sm font-medium text-gray-700">Usuario:</label>
+                    <input type="text" id="new-username" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
+                </div>
+                <div>
+                    <label for="new-name" class="block text-sm font-medium text-gray-700">Nombre:</label>
+                    <input type="text" id="new-name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
+                </div>
+                <div>
+                    <label for="new-score" class="block text-sm font-medium text-gray-700">Puntaje General:</label>
+                    <input type="number" id="new-score" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
+                </div>
+                <div>
+                    <label for="new-calls-goal" class="block text-sm font-medium text-gray-700">Meta de Llamadas:</label>
+                    <input type="number" id="new-calls-goal" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
+                </div>
+                <div>
+                    <label for="new-comments" class="block text-sm font-medium text-gray-700">Comentarios:</label>
+                    <textarea id="new-comments" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></textarea>
+                </div>
+                <div class="flex justify-end space-x-4">
+                    <button type="button" id="cancel-add-user" class="bg-gray-300 text-gray-800 font-semibold py-2 px-6 rounded-lg">Cancelar</button>
+                    <button type="submit" class="bg-green-500 text-white font-semibold py-2 px-6 rounded-lg">Añadir</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Edición de Detalles de Usuario -->
+    <div id="details-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">Editar Detalles de Usuario</h2>
+                <div class="flex space-x-2">
+                    <button id="save-details-top" class="bg-blue-500 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-600">Guardar</button>
+                    <button id="cancel-details-top" class="bg-gray-300 text-gray-800 font-semibold py-2 px-6 rounded-lg hover:bg-gray-400">Cancelar</button>
+                </div>
+            </div>
+
+            <form id="details-form" class="space-y-6">
+                <!-- Campos generales -->
+                <div class="bg-gray-100 p-4 rounded-lg">
+                    <h3 class="font-semibold text-lg mb-2">Datos Generales</h3>
+                    <div>
+                        <label for="edit-name" class="block text-sm font-medium text-gray-700">Nombre:</label>
+                        <input type="text" id="edit-name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                    </div>
+                    <div>
+                        <label for="edit-general-score" class="block text-sm font-medium text-gray-700 mt-2">Puntaje General:</label>
+                        <input type="number" id="edit-general-score" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                    </div>
+                    <div>
+                        <label for="edit-calls-goal" class="block text-sm font-medium text-gray-700 mt-2">Meta de Llamadas:</label>
+                        <input type="number" id="edit-calls-goal" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                    </div>
+                    <div>
+                        <label for="edit-general-comments" class="block text-sm font-medium text-gray-700 mt-2">Comentarios Generales:</label>
+                        <textarea id="edit-general-comments" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></textarea>
+                    </div>
+                    <h3 class="font-semibold text-lg mt-4 mb-2">Enlaces de Botones</h3>
+                    <div>
+                        <label for="edit-details-link" class="block text-sm font-medium text-gray-700">Enlace de "Detalles de Evaluación":</label>
+                        <input type="text" id="edit-details-link" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                    </div>
+                    <div>
+                        <label for="edit-plan-link" class="block text-sm font-medium text-gray-700 mt-2">Enlace de "Crear mi Plan de Mejora":</label>
+                        <input type="text" id="edit-plan-link" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                    </div>
+                </div>
+
+                <!-- Campos de evaluación por categoría -->
+                <div id="evaluation-details-container" class="space-y-4">
+                    <!-- Los campos se generarán dinámicamente -->
+                </div>
+
+                <!-- Insignias -->
+                <div class="bg-gray-100 p-4 rounded-lg">
+                    <h3 class="font-semibold text-lg mb-2">Insignias</h3>
+                    <div id="badges-details-container"></div>
+                    <button type="button" id="add-badge-button" class="mt-2 bg-green-500 text-white py-1 px-4 text-sm rounded-lg hover:bg-green-600">Añadir Insignia</button>
+                </div>
+
+                <!-- Próximas Insignias -->
+                <div class="bg-gray-100 p-4 rounded-lg">
+                    <h3 class="font-semibold text-lg mb-2">Próximas Insignias</h3>
+                    <div id="next-badges-details-container"></div>
+                    <button type="button" id="add-next-badge-button" class="mt-2 bg-green-500 text-white py-1 px-4 text-sm rounded-lg hover:bg-green-600">Añadir Próxima Insignia</button>
+                </div>
+            </form>
+            <div class="flex justify-end space-x-2 mt-4">
+                <button id="save-details-bottom" class="bg-blue-500 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-600">Guardar</button>
+                <button id="cancel-details-bottom" class="bg-gray-300 text-gray-800 font-semibold py-2 px-6 rounded-lg hover:bg-gray-400">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // Datos simulados del usuario.
+        // Se corrigió el problema de acceso al cambiar las claves a minúsculas para que coincidan con la entrada del usuario.
+        let userData = JSON.parse(localStorage.getItem('userData')) || {
+            "usuario01": {
+                name: "Ana Sofía Gutiérrez",
+                viciCode: "asesor01",
+                role: "user",
+                generalScore: 92,
+                callsGoal: 90,
+                generalComments: "Ana Sofía, tu desempeño ha sido sobresaliente este mes. Mantienes una excelente comunicación con los alumnos y eres un pilar fundamental para el equipo. ¡Continúa así!",
+                detailsLink: "https://www.google.com/details",
+                planLink: "https://www.google.com/plan",
+                evaluationData: [
+                    {
+                        category: "1. RETENCIÓN",
+                        emoji: "🎯",
+                        score: 9.0,
+                        supervisionComment: "Excelente seguimiento a alumnos morosos, lo que ayudó a reducir las bajas.",
+                        qualityComment: "El uso de la columna de retención en el CRM fue oportuno y eficaz. Gran trabajo.",
+                        criteria: [
+                            { name: "Seguimiento a población morosa.", score: 9.0 },
+                            { name: "Total de bajas de alumnos con morosidad.", score: 8.5 },
+                            { name: "Uso adecuado y oportuno de la columna de retención de CRM...", score: 9.5 },
+                            { name: "Retención y bajas pagadas.", score: 9.0 }
+                        ]
+                    },
+                    {
+                        category: "2. REINCORPORACIÓN",
+                        emoji: "🔄",
+                        score: 8.5,
+                        supervisionComment: "Se observó un buen registro y seguimiento de los prospectos de reincorporación.",
+                        qualityComment: "Se hizo un excelente trabajo en la búsqueda y difusión de promociones.",
+                        criteria: [
+                            { name: "Bajas por no pago.", score: 8.0 },
+                            { name: "Búsqueda y difusión de promociones.", score: 9.0 },
+                            { name: "Registro y seguimiento.", score: 8.5 },
+                            { name: "Cierre de prospectos.", score: 8.5 },
+                            { name: "Total de reingresos.", score: 8.5 }
+                        ]
+                    },
+                    {
+                        category: "3. PROCESOS",
+                        emoji: "⚙️",
+                        score: 9.5,
+                        supervisionComment: "Manejo impecable de los procesos académicos y administrativos.",
+                        qualityComment: "La información reportada coincide perfectamente con las actividades en el CRM.",
+                        criteria: [
+                            { name: "Búsqueda de alumnos por estatus y perfil...", score: 10.0 },
+                            { name: "Procesos académicos: Cambio de carrera y/o programa...", score: 9.0 },
+                            { name: "Atención a la solicitud de documentación del alumno...", score: 9.5 },
+                            { name: "Manejo adecuado de las herramientas tecnológicas...", score: 9.5 }
+                        ]
+                    },
+                    {
+                        category: "4. LLAMADAS",
+                        emoji: "📞",
+                        score: 8.0,
+                        supervisionComment: "El tono de voz siempre fue profesional y la estructura de la llamada fue adecuada.",
+                        qualityComment: "Se detectó oportunidad de mejora en el tiempo de respuesta.",
+                        criteria: [
+                            { name: "Utiliza un tono de voz amigable y profesional.", score: 9.0 },
+                            { name: "Tiene una escucha activa...", score: 8.5 },
+                            { name: "Se muestra asertivo...", score: 8.0 },
+                            { name: "Sigue la estructura de la llamada.", score: 8.0 }
+                        ]
+                    },
+                    {
+                        category: "5. ATENCIÓN Y SERVICIO",
+                        emoji: "🤝",
+                        score: 9.0,
+                        supervisionComment: "Excelente trato al alumno y empatía en cada interacción.",
+                        qualityComment: "La atención siempre fue oportuna y con el seguimiento correcto.",
+                        criteria: [
+                            { name: "Muestra empatía y escucha activa.", score: 9.0 },
+                            { name: "Transmite seguridad...", score: 9.0 },
+                            { name: "Es respetuoso y amable.", score: 9.5 },
+                            { name: "Responde de forma clara y oportuna.", score: 8.5 }
+                        ]
+                    },
+                    {
+                        category: "6. WHATSAPP",
+                        emoji: "📱",
+                        score: 10.0,
+                        supervisionComment: "Respuesta inmediata y eficiente a todos los mensajes de los alumnos.",
+                        qualityComment: "El uso del lenguaje es profesional y la resolución de dudas fue excelente.",
+                        criteria: [
+                            { name: "Respuesta en un tiempo máximo de 5 min...", score: 10.0 },
+                            { name: "Uso de un lenguaje claro y formal...", score: 10.0 },
+                            { name: "No utiliza abreviaturas...", score: 10.0 },
+                            { name: "Brinda la información completa en el primer mensaje...", score: 10.0 }
+                        ]
+                    },
+                    {
+                        category: "7. ACTIVIDADES DE REDES SOCIALES",
+                        emoji: "📣",
+                        score: 8.5,
+                        supervisionComment: "Las publicaciones son pertinentes y aportan valor al equipo.",
+                        qualityComment: "El contenido es claro y visualmente atractivo.",
+                        criteria: [
+                            { name: "La publicación es pertinente...", score: 8.5 },
+                            { name: "El mensaje es claro, bien estructurado...", score: 8.5 },
+                            { name: "Redacción impecable...", score: 9.0 },
+                            { name: "Se utilizan imágenes, videos o elementos gráficos llamativos...", score: 8.0 },
+                            { name: "Se publica en la fecha establecida...", score: 9.0 }
+                        ]
+                    },
+                    {
+                        category: "8. ACTIVIDADES ADMINISTRATIVAS",
+                        emoji: "📝",
+                        score: 9.0,
+                        supervisionComment: "El registro de actividades en el reporte de seguimiento CRM es diario y oportuno.",
+                        qualityComment: "Se mantiene una excelente comunicación con los departamentos y se canalizan los casos de forma óptima.",
+                        criteria: [
+                            { name: "Asigna y actualiza perfiles.", score: 9.0 },
+                            { name: "Especifica a través de que medio abordó al alumno.", score: 9.5 },
+                            { name: "Incluye fecha y comentario de búsqueda.", score: 9.0 },
+                            { name: "Hace mención de los trámites en los que apoya al alumno.", score: 9.0 },
+                            { name: "La información reportada coincide con las actividades en los diferentes medios de contacto...", score: 8.5 },
+                            { name: "Registra en tiempo (diario) sus actividades en el reporte de seguimiento CRM.", score: 9.5 },
+                            { name: "Mantiene comunicación y crea sinergia por los canales formales...", score: 9.0 },
+                            { name: "Es proactivo (a) en el apoyo de casos durante sus guardias.", score: 8.5 },
+                            { name: "Canaliza de manera óptima las situaciones en donde se requiere la intervención de otro departamento...", score: 9.5 }
+                        ]
+                    }
+                ],
+                trendData: {
+                    labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+                    data: {
+                        '1. RETENCIÓN': [8.5, 8.8, 9.0, 8.9, 9.1, 9.2, 9.0, 9.0, 9.1, 9.3, 9.2, 9.0],
+                        '2. REINCORPORACIÓN': [8.0, 8.2, 8.4, 8.5, 8.7, 8.6, 8.5, 8.5, 8.6, 8.8, 8.9, 8.5],
+                        '3. PROCESOS': [9.0, 9.2, 9.4, 9.3, 9.5, 9.6, 9.5, 9.5, 9.6, 9.7, 9.6, 9.5],
+                        '4. LLAMADAS': [7.5, 7.8, 8.0, 7.9, 8.1, 8.0, 8.0, 8.0, 8.1, 8.2, 8.1, 8.0],
+                        '5. ATENCIÓN Y SERVICIO': [8.5, 8.7, 8.9, 9.0, 9.1, 9.2, 9.0, 9.0, 9.1, 9.2, 9.1, 9.0],
+                        '6. WHATSAPP': [9.5, 9.8, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0],
+                        '7. ACTIVIDADES DE REDES SOCIALES': [8.0, 8.2, 8.4, 8.3, 8.5, 8.6, 8.5, 8.5, 8.6, 8.7, 8.6, 8.5],
+                        '8. ACTIVIDADES ADMINISTRATIVAS': [8.5, 8.7, 8.9, 9.0, 9.2, 9.1, 9.0, 9.0, 9.1, 9.3, 9.2, 9.0]
+                    },
+                    colors: ['#3498db', '#e74c3c', '#2ecc71', '#f1c40f', '#9b59b6', '#34495e', '#1abc9c', '#e67e22']
+                },
+                badges: [
+                    { title: "🏆 Maestro(a) de Procesos", description: "Demostraste un manejo impecable de los procesos académicos y administrativos." },
+                    { title: "🏅 Campeón(a) de Retención", description: "Tu seguimiento a alumnos morosos fue clave para evitar bajas." },
+                    { title: "🌟 Estrella del Módulo", description: "Obtuviste una calificación sobresaliente en el módulo actual." },
+                ],
+                nextBadges: [
+                    { strength: "Mantener consistencia en procesos de reincorporación.", goal: "Alcanzar el 95% de reincorporación." },
+                    { strength: "Mejorar el tiempo de respuesta en llamadas.", goal: "Reducir el tiempo promedio a 1 minuto y 30 segundos." }
+                ]
+            },
+            "admin": {
+                role: "admin"
+            }
+        };
+
+        // Simula más usuarios con datos similares
+        for (let i = 2; i <= 18; i++) {
+            const userNum = i.toString().padStart(2, '0');
+            const userName = `usuario${userNum}`;
+            if (!userData[userName]) {
+                userData[userName] = {
+                    name: `Asesor ${i}`,
+                    viciCode: `asesor${userNum}`,
+                    role: "user",
+                    generalScore: Math.floor(Math.random() * 20) + 80, // Puntaje aleatorio entre 80 y 100
+                    callsGoal: Math.floor(Math.random() * 20) + 80,
+                    generalComments: "Excelente trabajo, ¡sigue así!",
+                    detailsLink: "https://www.google.com/details",
+                    planLink: "https://www.google.com/plan",
+                    evaluationData: JSON.parse(JSON.stringify(userData["usuario01"].evaluationData)),
+                    trendData: JSON.parse(JSON.stringify(userData["usuario01"].trendData)),
+                    badges: JSON.parse(JSON.stringify(userData["usuario01"].badges)),
+                    nextBadges: JSON.parse(JSON.stringify(userData["usuario01"].nextBadges))
+                };
+            }
+        }
+        
+        // Guardar en localStorage
+        function saveUserData() {
+            localStorage.setItem('userData', JSON.stringify(userData));
+        }
+
+        const loginScreen = document.getElementById('login-screen');
+        const adminScreen = document.getElementById('admin-screen');
+        const dashboardScreen = document.getElementById('dashboard-screen');
+        const userInput = document.getElementById('user-input');
+        const loginButton = document.getElementById('login-button');
+        const errorMessage = document.getElementById('error-message');
+        const userNameElement = document.getElementById('user-name');
+        const dashboardLogoutButton = document.getElementById('dashboard-logout-button');
+        const adminLogoutButton = document.getElementById('admin-logout-button');
+        const generalScoreBar = document.getElementById('general-score-bar');
+        const generalScoreText = document.getElementById('general-score-text');
+        const callsGoalBar = document.getElementById('calls-goal-bar');
+        const callsGoalText = document.getElementById('calls-goal-text');
+        const evaluationCardsContainer = document.getElementById('evaluation-cards-container');
+        const supervisorComments = document.getElementById('supervisor-comments');
+        const detailsButton = document.getElementById('details-button');
+        const improvementPlanButton = document.getElementById('improvement-plan-button');
+        const usersTableBody = document.getElementById('users-table-body');
+        const addUserModal = document.getElementById('add-user-modal');
+        const detailsModal = document.getElementById('details-modal');
+        const emptyTableButton = document.getElementById('empty-table-button');
+        const emptyTableModal = document.getElementById('empty-table-modal');
+        const confirmEmptyButton = document.getElementById('confirm-empty-button');
+        const cancelEmptyButton = document.getElementById('cancel-empty-button');
+
+        let currentChart = null;
+        let editingUserKey = null;
+
+        const PALETTE = ['#ffe6a8', '#a8d7ff', '#a8ffe6', '#ffb8a8', '#d8a8ff', '#a8ffb8', '#ffcca8', '#a8ccff'];
+
+        function showScreen(screen) {
+            loginScreen.classList.add('hidden');
+            adminScreen.classList.add('hidden');
+            dashboardScreen.classList.add('hidden');
+            screen.classList.remove('hidden');
+        }
+
+        function createCard(data, index) {
+            const cardColor = PALETTE[index % PALETTE.length];
+            const scoreColorClass = data.score >= 7.0 ? 'score-green' : 'score-red';
+            const tabColor = data.score >= 7.0 ? 'bg-green-500' : 'bg-red-500';
+
+            const cardHtml = `
+                <div class="card p-6 rounded-xl shadow-md cursor-pointer bg-color-${index + 1}">
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="flex items-center">
+                            <span class="text-2xl mr-2">${data.emoji}</span>
+                            <h3 class="text-xl font-semibold">${data.category}</h3>
+                        </div>
+                        <div class="score-circle ${scoreColorClass} bg-white text-gray-800">${data.score.toFixed(1)}</div>
+                    </div>
+                    <div class="flex justify-center space-x-2 mb-4">
+                        <button class="tab-card-button px-4 py-2 text-sm rounded-full transition-colors duration-200 border border-gray-300" data-card-tab="supervision" data-card-index="${index}">Supervisión</button>
+                        <button class="tab-card-button px-4 py-2 text-sm rounded-full transition-colors duration-200 border border-gray-300" data-card-tab="quality" data-card-index="${index}">Calidad</button>
+                    </div>
+                    <div class="comment-area bg-white p-4 rounded-lg text-gray-700 text-sm h-24 overflow-y-auto mb-4">
+                        ${data.supervisionComment}
+                    </div>
+                    <div class="criteria-container">
+                        <button class="toggle-criteria flex justify-between items-center w-full text-left font-semibold text-gray-700 py-2">
+                            Criterios de Calificación
+                            <span class="toggle-arrow">▼</span>
+                        </button>
+                        <ul class="criteria-list mt-2 space-y-1 text-sm text-gray-600 hidden">
+                            ${data.criteria.map(c => `<li>• ${c.name}: <span class="font-bold">${c.score.toFixed(1)}</span></li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+            `;
+            return cardHtml;
+        }
+
+        function renderDashboard(userKey) {
+            const user = userData[userKey];
+            if (!user) return;
+
+            userNameElement.textContent = user.name;
+            generalScoreBar.style.width = `${user.generalScore}%`;
+            generalScoreText.textContent = `${user.generalScore}%`;
+            callsGoalBar.style.width = `${user.callsGoal}%`;
+            callsGoalText.textContent = `${user.callsGoal}%`;
+            supervisorComments.textContent = user.generalComments;
+            detailsButton.onclick = () => window.open(user.detailsLink, '_blank');
+            improvementPlanButton.onclick = () => window.open(user.planLink, '_blank');
+
+            // Pestaña por defecto
+            selectTab('general');
+
+            // Renderizar tarjetas
+            evaluationCardsContainer.innerHTML = user.evaluationData.map(createCard).join('');
+            
+            // Lógica para pestañas de tarjeta y expandibles
+            document.querySelectorAll('.tab-card-button').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const index = e.target.getAttribute('data-card-index');
+                    const tab = e.target.getAttribute('data-card-tab');
+                    const card = e.target.closest('.card');
+                    const commentArea = card.querySelector('.comment-area');
+                    
+                    card.querySelectorAll('.tab-card-button').forEach(btn => btn.classList.remove('active', 'bg-blue-500', 'text-white'));
+                    e.target.classList.add('active', 'bg-blue-500', 'text-white');
+
+                    if (tab === 'supervision') {
+                        commentArea.textContent = user.evaluationData[index].supervisionComment;
+                    } else if (tab === 'quality') {
+                        commentArea.textContent = user.evaluationData[index].qualityComment;
+                    }
+                });
+            });
+
+            document.querySelectorAll('.toggle-criteria').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const criteriaList = e.target.nextElementSibling;
+                    const arrow = e.target.querySelector('.toggle-arrow');
+                    criteriaList.classList.toggle('hidden');
+                    arrow.classList.toggle('rotated');
+                });
+            });
+
+            // Renderizar insignias
+            const badgesList = document.getElementById('badges-list');
+            badgesList.innerHTML = user.badges.map(b => `
+                <li class="flex items-start">
+                    <span class="text-2xl mr-2">${b.title.includes('Maestro') ? '🏆' : (b.title.includes('Campeón') ? '🏅' : '🌟')}</span>
+                    <div>
+                        <span class="font-bold text-gray-800">${b.title}</span>
+                        <p class="text-gray-600">${b.description}</p>
+                    </div>
+                </li>
+            `).join('');
+
+            const nextBadgesList = document.getElementById('next-badges-list');
+            nextBadgesList.innerHTML = user.nextBadges.map(b => `
+                <li class="flex items-start">
+                    <span class="text-2xl mr-2">🚀</span>
+                    <div>
+                        <p><span class="font-semibold text-gray-800">Fortaleza:</span> ${b.strength}</p>
+                        <p><span class="font-semibold text-gray-800">Meta:</span> ${b.goal}</p>
+                    </div>
+                </li>
+            `).join('');
+            
+            // Inicializa la primera pestaña de cada tarjeta
+            document.querySelectorAll('.card').forEach(card => {
+                card.querySelector('.tab-card-button').click();
+            });
+
+        }
+
+        function createChart(data) {
+            const ctx = document.getElementById('tendenciasChart').getContext('2d');
+            if (currentChart) {
+                currentChart.destroy();
+            }
+
+            const datasets = Object.keys(data.data).map((key, index) => {
+                return {
+                    label: key,
+                    data: data.data[key],
+                    borderColor: data.colors[index],
+                    backgroundColor: data.colors[index],
+                    fill: false,
+                    tension: 0.1,
+                    hidden: true // Ocultar por defecto
+                };
+            });
+
+            currentChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false,
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 10,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)',
+                            },
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)',
+                            }
+                        }
+                    },
+                    elements: {
+                        point: {
+                            radius: 5,
+                            hoverRadius: 7,
+                            backgroundColor: 'white',
+                            borderColor: 'rgba(0,0,0,0.5)',
+                            borderWidth: 2
+                        }
+                    }
+                }
+            });
+        }
+
+        function selectTab(tabId) {
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabPanes = document.querySelectorAll('.tab-pane');
+            tabButtons.forEach(button => {
+                button.classList.remove('active');
+                button.classList.remove('bg-blue-500');
+                button.classList.remove('text-white');
+                button.classList.add('bg-gray-100', 'text-gray-600');
+            });
+            tabPanes.forEach(pane => pane.classList.add('hidden'));
+
+            const selectedButton = document.querySelector(`.tab-button[data-tab="${tabId}"]`);
+            const selectedPane = document.getElementById(`${tabId}-tab`);
+
+            if (selectedButton && selectedPane) {
+                selectedButton.classList.add('active', 'bg-blue-500', 'text-white');
+                selectedButton.classList.remove('bg-gray-100', 'text-gray-600');
+                selectedPane.classList.remove('hidden');
+
+                if (tabId === 'tendencias' && currentChart === null) {
+                    const user = userData[userInput.value.toLowerCase()];
+                    if (user && user.trendData) {
+                        createChart(user.trendData);
+                    }
+                }
+            }
+        }
+        
+        // Renderizar la tabla de usuarios en el panel de administrador
+        function renderAdminTable(filter = {}) {
+            usersTableBody.innerHTML = '';
+            const userKeys = Object.keys(userData).filter(key => userData[key].role === 'user');
+            
+            userKeys.forEach(key => {
+                const user = userData[key];
+                
+                // Aplicar filtros
+                if (filter.user && !key.includes(filter.user.toLowerCase())) return;
+                if (filter.name && !user.name.toLowerCase().includes(filter.name.toLowerCase())) return;
+                
+                const row = document.createElement('tr');
+                row.setAttribute('data-user-key', key);
+                row.innerHTML = `
+                    <td>${key}</td>
+                    <td>${user.name}</td>
+                    <td>${user.generalScore}</td>
+                    <td>${user.callsGoal}</td>
+                    <td>${user.generalComments.substring(0, 50)}...</td>
+                    <td class="flex space-x-2">
+                        <button class="edit-button text-blue-500 hover:underline" data-key="${key}">Editar</button>
+                        <button class="details-button text-purple-500 hover:underline" data-key="${key}">Detalles</button>
+                        <button class="delete-button text-red-500 hover:underline" data-key="${key}">Eliminar</button>
+                    </td>
+                `;
+                usersTableBody.appendChild(row);
+            });
+            
+            // Añadir event listeners para los botones de la tabla
+            document.querySelectorAll('.edit-button').forEach(button => {
+                button.addEventListener('click', handleEditClick);
+            });
+            document.querySelectorAll('.delete-button').forEach(button => {
+                button.addEventListener('click', handleDeleteClick);
+            });
+            document.querySelectorAll('.details-button').forEach(button => {
+                button.addEventListener('click', handleDetailsClick);
+            });
+        }
+        
+        // Lógica de edición en línea
+        function handleEditClick(e) {
+            const key = e.target.getAttribute('data-key');
+            const row = e.target.closest('tr');
+            const user = userData[key];
+            
+            row.innerHTML = `
+                <td>${key}</td>
+                <td><input type="text" value="${user.name}" data-field="name"></td>
+                <td><input type="number" value="${user.generalScore}" data-field="generalScore"></td>
+                <td><input type="number" value="${user.callsGoal}" data-field="callsGoal"></td>
+                <td><textarea data-field="generalComments">${user.generalComments}</textarea></td>
+                <td class="flex space-x-2">
+                    <button class="save-button text-green-500 hover:underline" data-key="${key}">Guardar</button>
+                    <button class="cancel-button text-gray-500 hover:underline" data-key="${key}">Cancelar</button>
+                </td>
+            `;
+            
+            // Añadir listeners para guardar y cancelar
+            row.querySelector('.save-button').addEventListener('click', handleSaveClick);
+            row.querySelector('.cancel-button').addEventListener('click', () => renderAdminTable());
+        }
+
+        function handleSaveClick(e) {
+            const key = e.target.getAttribute('data-key');
+            const row = e.target.closest('tr');
+            
+            userData[key].name = row.querySelector('[data-field="name"]').value;
+            userData[key].generalScore = parseInt(row.querySelector('[data-field="generalScore"]').value);
+            userData[key].callsGoal = parseInt(row.querySelector('[data-field="callsGoal"]').value);
+            userData[key].generalComments = row.querySelector('[data-field="generalComments"]').value;
+
+            saveUserData();
+            renderAdminTable();
+        }
+        
+        // Lógica para eliminar un usuario
+        function handleDeleteClick(e) {
+            const key = e.target.getAttribute('data-key');
+            if (confirm(`¿Estás seguro de que deseas eliminar al usuario "${key}"?`)) {
+                delete userData[key];
+                saveUserData();
+                renderAdminTable();
+            }
+        }
+        
+        // Lógica para el modal de detalles
+        function handleDetailsClick(e) {
+            const key = e.target.getAttribute('data-key');
+            editingUserKey = key;
+            const user = userData[key];
+            
+            document.getElementById('edit-name').value = user.name;
+            document.getElementById('edit-general-score').value = user.generalScore;
+            document.getElementById('edit-calls-goal').value = user.callsGoal;
+            document.getElementById('edit-general-comments').value = user.generalComments;
+            document.getElementById('edit-details-link').value = user.detailsLink;
+            document.getElementById('edit-plan-link').value = user.planLink;
+
+            const evaluationDetailsContainer = document.getElementById('evaluation-details-container');
+            evaluationDetailsContainer.innerHTML = '';
+            user.evaluationData.forEach((cat, catIndex) => {
+                const catDiv = document.createElement('div');
+                catDiv.className = 'bg-gray-200 p-4 rounded-lg mb-4';
+                catDiv.innerHTML = `<h4 class="font-semibold text-sm mb-2">${cat.category}</h4>`;
+                catDiv.innerHTML += `
+                    <div class="space-y-2">
+                        <div><label class="block text-xs font-medium text-gray-700">Comentario de Supervisión:</label><textarea class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" data-cat-index="${catIndex}" data-field="supervisionComment">${cat.supervisionComment}</textarea></div>
+                        <div><label class="block text-xs font-medium text-gray-700">Comentario de Calidad:</label><textarea class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" data-cat-index="${catIndex}" data-field="qualityComment">${cat.qualityComment}</textarea></div>
+                    </div>
+                `;
+                evaluationDetailsContainer.appendChild(catDiv);
+            });
+
+            const badgesContainer = document.getElementById('badges-details-container');
+            badgesContainer.innerHTML = '';
+            user.badges.forEach((badge, index) => {
+                badgesContainer.innerHTML += `
+                    <div class="flex space-x-2 items-center mb-2">
+                        <input type="text" class="flex-1 rounded-md border-gray-300 shadow-sm" value="${badge.title}" data-badge-index="${index}" data-field="title">
+                        <input type="text" class="flex-1 rounded-md border-gray-300 shadow-sm" value="${badge.description}" data-badge-index="${index}" data-field="description">
+                        <button type="button" class="remove-badge bg-red-500 text-white p-2 rounded-lg text-xs" data-badge-index="${index}">-</button>
+                    </div>
+                `;
+            });
+
+            const nextBadgesContainer = document.getElementById('next-badges-details-container');
+            nextBadgesContainer.innerHTML = '';
+            user.nextBadges.forEach((badge, index) => {
+                nextBadgesContainer.innerHTML += `
+                    <div class="flex space-x-2 items-center mb-2">
+                        <input type="text" class="flex-1 rounded-md border-gray-300 shadow-sm" value="${badge.strength}" data-next-badge-index="${index}" data-field="strength">
+                        <input type="text" class="flex-1 rounded-md border-gray-300 shadow-sm" value="${badge.goal}" data-next-badge-index="${index}" data-field="goal">
+                        <button type="button" class="remove-next-badge bg-red-500 text-white p-2 rounded-lg text-xs" data-next-badge-index="${index}">-</button>
+                    </div>
+                `;
+            });
+            
+            // Add listeners for removing badges
+            document.querySelectorAll('.remove-badge').forEach(btn => btn.addEventListener('click', (e) => {
+                const index = parseInt(e.target.dataset.badgeIndex);
+                user.badges.splice(index, 1);
+                handleDetailsClick({target: {getAttribute: () => editingUserKey}}); // Rerender modal
+            }));
+            
+            document.querySelectorAll('.remove-next-badge').forEach(btn => btn.addEventListener('click', (e) => {
+                const index = parseInt(e.target.dataset.nextBadgeIndex);
+                user.nextBadges.splice(index, 1);
+                handleDetailsClick({target: {getAttribute: () => editingUserKey}}); // Rerender modal
+            }));
+            
+            showModal(detailsModal);
+        }
+
+        function saveDetails() {
+            const user = userData[editingUserKey];
+            user.name = document.getElementById('edit-name').value;
+            user.generalScore = parseInt(document.getElementById('edit-general-score').value);
+            user.callsGoal = parseInt(document.getElementById('edit-calls-goal').value);
+            user.generalComments = document.getElementById('edit-general-comments').value;
+            user.detailsLink = document.getElementById('edit-details-link').value;
+            user.planLink = document.getElementById('edit-plan-link').value;
+
+            document.querySelectorAll('#evaluation-details-container textarea').forEach(input => {
+                const catIndex = parseInt(input.getAttribute('data-cat-index'));
+                const field = input.getAttribute('data-field');
+                user.evaluationData[catIndex][field] = input.value;
+            });
+            
+            document.querySelectorAll('#badges-details-container div').forEach((div, index) => {
+                const title = div.querySelector('[data-field="title"]').value;
+                const description = div.querySelector('[data-field="description"]').value;
+                if (user.badges[index]) {
+                    user.badges[index].title = title;
+                    user.badges[index].description = description;
+                }
+            });
+
+            document.querySelectorAll('#next-badges-details-container div').forEach((div, index) => {
+                const strength = div.querySelector('[data-field="strength"]').value;
+                const goal = div.querySelector('[data-field="goal"]').value;
+                if (user.nextBadges[index]) {
+                    user.nextBadges[index].strength = strength;
+                    user.nextBadges[index].goal = goal;
+                }
+            });
+            
+            saveUserData();
+            hideModal(detailsModal);
+            renderAdminTable();
+        }
+
+        document.getElementById('add-badge-button').addEventListener('click', () => {
+            const user = userData[editingUserKey];
+            user.badges.push({ title: '', description: '' });
+            handleDetailsClick({target: {getAttribute: () => editingUserKey}});
+        });
+
+        document.getElementById('add-next-badge-button').addEventListener('click', () => {
+            const user = userData[editingUserKey];
+            user.nextBadges.push({ strength: '', goal: '' });
+            handleDetailsClick({target: {getAttribute: () => editingUserKey}});
+        });
+
+
+        // Funciones para mostrar/ocultar modales
+        function showModal(modal) { modal.classList.remove('hidden'); }
+        function hideModal(modal) { modal.classList.add('hidden'); }
+
+        // Manejadores de eventos
+        loginButton.addEventListener('click', handleLogin);
+        userInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleLogin(); });
+        dashboardLogoutButton.addEventListener('click', () => showScreen(loginScreen));
+        adminLogoutButton.addEventListener('click', () => showScreen(loginScreen));
+        
+        // Manejadores para el Panel de Administrador
+        document.getElementById('save-general-changes').addEventListener('click', () => {
+            document.getElementById('login-title').textContent = document.getElementById('admin-title').value;
+            document.getElementById('login-subtitle').textContent = document.getElementById('admin-subtitle').value;
+            document.getElementById('login-description').textContent = document.getElementById('admin-description').value;
+        });
+
+        emptyTableButton.addEventListener('click', () => showModal(emptyTableModal));
+        confirmEmptyButton.addEventListener('click', () => {
+            userData = { "admin": { role: "admin" } };
+            saveUserData();
+            renderAdminTable();
+            hideModal(emptyTableModal);
+            alert("Tabla vaciada con éxito."); // Usamos alert para notificar
+        });
+        cancelEmptyButton.addEventListener('click', () => hideModal(emptyTableModal));
+        
+        document.getElementById('add-user-button').addEventListener('click', () => showModal(addUserModal));
+        addUserModal.querySelector('.close-button').addEventListener('click', () => hideModal(addUserModal));
+        document.getElementById('cancel-add-user').addEventListener('click', () => hideModal(addUserModal));
+        document.getElementById('add-user-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newUsername = document.getElementById('new-username').value.toLowerCase();
+            const newName = document.getElementById('new-name').value;
+            const newScore = document.getElementById('new-score').value;
+            const newCallsGoal = document.getElementById('new-calls-goal').value;
+            const newComments = document.getElementById('new-comments').value;
+
+            if (userData[newUsername]) {
+                alert('El usuario ya existe. Por favor, use otro nombre de usuario.');
+                return;
+            }
+
+            userData[newUsername] = {
+                name: newName,
+                viciCode: newUsername,
+                role: "user",
+                generalScore: parseInt(newScore),
+                callsGoal: parseInt(newCallsGoal),
+                generalComments: newComments,
+                detailsLink: "https://www.google.com/details",
+                planLink: "https://www.google.com/plan",
+                evaluationData: JSON.parse(JSON.stringify(userData["usuario01"].evaluationData)),
+                trendData: JSON.parse(JSON.stringify(userData["usuario01"].trendData)),
+                badges: [],
+                nextBadges: []
+            };
+
+            saveUserData();
+            renderAdminTable();
+            hideModal(addUserModal);
+            e.target.reset();
+        });
+
+        document.getElementById('save-details-top').addEventListener('click', saveDetails);
+        document.getElementById('save-details-bottom').addEventListener('click', saveDetails);
+        document.getElementById('cancel-details-top').addEventListener('click', () => hideModal(detailsModal));
+        document.getElementById('cancel-details-bottom').addEventListener('click', () => hideModal(detailsModal));
+        
+        // Filtros de tabla
+        document.getElementById('filter-user').addEventListener('input', (e) => {
+            renderAdminTable({ user: e.target.value });
+        });
+        document.getElementById('filter-name').addEventListener('input', (e) => {
+            renderAdminTable({ name: e.target.value });
+        });
+
+        function handleLogin() {
+            const user = userInput.value.toLowerCase();
+            if (userData[user]) {
+                errorMessage.classList.add('hidden');
+                const userRole = userData[user].role;
+                if (userRole === "admin") {
+                    document.getElementById('admin-title').value = document.getElementById('login-title').textContent;
+                    document.getElementById('admin-subtitle').value = document.getElementById('login-subtitle').textContent;
+                    document.getElementById('admin-description').value = document.getElementById('login-description').textContent;
+                    renderAdminTable();
+                    showScreen(adminScreen);
+                } else {
+                    renderDashboard(user);
+                    showScreen(dashboardScreen);
+                }
+            } else {
+                errorMessage.classList.remove('hidden');
+            }
+        }
+        
+        window.onload = function() {
+            const initialData = JSON.parse(localStorage.getItem('userData'));
+            if (!initialData) {
+                saveUserData();
+            }
+        }
+
+    </script>
+</body>
+</html>
